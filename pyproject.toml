@@ -1,0 +1,26 @@
+[tool.poetry]
+name = "maelstrom-evolution"
+version = "0.1.0"
+description = "Strong-typed genetic programming framework with support for island models, competitive coevolution, and rapid prototyping"
+authors = ["Deacon Seals"]
+readme = "README.md"
+repository = "https://github.com/DeaconSeals/maelstrom-framework"
+maintainers = ["Ethan Wilkes <rewilkes0041@gmail.com>",]
+packages = [{include = "maelstrom"}]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+tqdm = "^4.65.0"
+
+
+[tool.poetry.group.dev.dependencies]
+sphinx = "^6.1.3"
+furo = "^2023.3.23"
+pylint = "^2.17.0"
+black = "^23.1.0"
+[tool.pylint.messages_control]
+disable = ["too-many-instance-attributes", "too-many-arguments"]
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
