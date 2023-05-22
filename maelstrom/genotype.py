@@ -2,6 +2,8 @@
 import math
 import random
 
+global MAXIMUM_TYPE_SIZE
+MAXIMUM_TYPE_SIZE = 1000
 
 class GeneticTree:
     """
@@ -16,6 +18,7 @@ class GeneticTree:
     literal_initializers = {}
     DEBUG = False
     local = {}
+    access_cache = {}
 
     @classmethod
     def declare_primitive(
@@ -69,6 +72,10 @@ class GeneticTree:
                     cls.transitives[role] = set()
                     cls.literal_initializers[role] = {}
                     cls.local[role] = {}
+                else: # clear access_cache upon addition of new primitive
+                    for _roles in cls.access_cache.keys():
+                        if role in _roles:
+                            del cls.access_cache[_roles]
                 cls.primitives[role].add((func, output_type, input_types))
                 cls.local[role][func.__name__] = func
                 if transitive and len(set(input_types)) == 1:
@@ -86,29 +93,99 @@ class GeneticTree:
 
         return add_primitive
 
+    @classmethod
+    def get_primitives(cls, roles):
+        if isinstance(roles, str):
+            roles = (roles,)  # turns the string into a single-element tuple
+        if roles not in cls.access_cache:
+            cls.access_cache[roles] = {}
+        if "primitives" not in cls.access_cache[roles]:
+            primitive_set = set()
+            for role in roles:
+                assert role in cls.primitives, f"encountered unknown role: {role}\nknown roles: {cls.primitives.keys()}"
+                primitive_set |= cls.primitives[role]
+            cls.access_cache[roles]["primitives"] = primitive_set
+        return cls.access_cache[roles]["primitives"]
+
+    @classmethod
+    def get_literal_init(cls, roles):
+        if isinstance(roles, str):
+            roles = (roles,)  # turns the string into a single-element tuple
+        if roles not in cls.access_cache:
+            cls.access_cache[roles] = {}
+        if "literal_init" not in cls.access_cache[roles]:
+            literal_init = {}
+            for role in roles:
+                assert role in cls.literal_initializers, f"encountered unknown role: {role}\nknown roles: {cls.literal_initializers.keys()}"
+                literal_init.update(cls.literal_initializers[role])
+            cls.access_cache[roles]["literal_init"] = literal_init
+        return cls.access_cache[roles]["literal_init"]
+
+    @classmethod
+    def get_local_context(cls, roles):
+        if isinstance(roles, str):
+            roles = (roles,)  # turns the string into a single-element tuple
+        if roles not in cls.access_cache:
+            cls.access_cache[roles] = {}
+        if "local" not in cls.access_cache[roles]:
+            local = {}
+            for role in roles:
+                assert role in cls.local, f"encountered unknown role: {role}\nknown roles: {cls.local.keys()}"
+                local.update(cls.local[role])
+            cls.access_cache[roles]["local"] = local
+        return cls.access_cache[roles]["local"]
+
+    @classmethod
+    def get_min_sizes(cls, roles):
+        if isinstance(roles, str):
+            roles = (roles,)  # turns the string into a single-element tuple
+        if roles not in cls.access_cache:
+            cls.access_cache[roles] = {}
+        if "min_sizes" not in cls.access_cache[roles]:
+            min_sizes = {}
+            primitives = cls.get_primitives(roles)
+            types = {}
+            for _, output_type, input_types in primitives:
+                if output_type not in types:
+                    types[output_type] = set()
+                if len(input_types) == 0:
+                    min_sizes[output_type] = 0
+                else:
+                    types[output_type].add(input_types)
+            for _ in range(MAXIMUM_TYPE_SIZE):
+                if len(min_sizes) = len(types):
+                    break
+                for output_type in types:
+                    if output_type in min_sizes:
+                        continue
+                    else:
+                        for input_types in types[output_type]:
+                            for input_type in input_types:
+                                if input_type not in min_sizes or input_type == output_type:
+                                    break
+                            else:
+                                size = max([min_sizes[input_type] for input_type in input_types]) + 1
+                                if output_type not in min_sizes:
+                                    min_sizes[output_type] = size
+                                else:
+                                    min_sizes[output_type] = min(min_sizes[output_type], size)
+            cls.access_cache[roles]["min_sizes"] = min_sizes
+        return cls.access_cache[roles]["min_sizes"]
+
     def __init__(self, roles, output_type):
         """
         Initializes a tree object with a set of primitives appropriate for
         the roles assigned to the object and a root node of the desired output
         type.
         """
-        self.primitive_set = set()
-        self.init_dict = {}
-        self.local = {}
         if isinstance(roles, str):
             roles = (roles,)  # turns the string into a single-element tuple
         self.roles = roles
-        for role in self.roles:
-            if role not in self.__class__.primitives:
-                print(f"encountered unknown role: {role}")
-            else:
-                self.primitive_set |= self.__class__.primitives[role]
-                self.init_dict.update(self.__class__.literal_initializers[role])
-                self.local.update(self.__class__.local[role])
-        assert len(self.primitive_set) > 0, "No valid roles used in tree declaration"
+        primitive_set = self.get_primitives(self.roles)
+        assert len(primitive_set) > 0, "No valid roles used in tree declaration"
         self.root = Node(output_type)
         self.branching_factor = max(
-            len(primitive[2]) for primitive in self.primitive_set
+            len(primitive[2]) for primitive in primitive_set
         )
         self.node_tags = None
         self.depth_limit = 0
@@ -138,7 +215,10 @@ class GeneticTree:
             self.hard_limit = depth * 2
         else:
             self.hard_limit = hard_limit
-        self.root.initialize(self.init_dict)
+        self.root.initialize(self.get_literal_init(self.roles))
+        self.branching_factor = max(
+            len(primitive[2]) for primitive in self.get_primitives(self.roles)
+        )
         self.node_tags = self.root.get_tags(self.branching_factor)
         self.depth = math.ceil(
             math.log(max(list(self.node_tags.keys())), self.branching_factor)
@@ -151,13 +231,7 @@ class GeneticTree:
         """
         Builds the calling tree object into a callable function
         """
-        local = {}
-        for role in self.roles:
-            if role not in self.__class__.primitives:
-                print(f"encountered unknown role: {role}")
-            else:
-                local.update(self.__class__.local[role])
-        self.func = eval("".join(["lambda context: ", self.string]), local)
+        self.func = eval("".join(["lambda context: ", self.string]), self.get_local(self.roles))
 
     def clean(self):
         """
@@ -175,7 +249,7 @@ class GeneticTree:
         Args:
             depth: The depth of the tree to initialize
         """
-        self.root.full(self.primitive_set, depth - 1)
+        self.root.full(self.get_primitives(self.roles), depth - 1)
 
     # Grow initialization method
     def grow(self, depth=1, leaf_prob=0.5):
@@ -186,7 +260,7 @@ class GeneticTree:
             depth: The depth of the tree to initialize
             leaf_prob: The probability of initializing a leaf node
         """
-        self.root.grow(self.primitive_set, depth - 1, leaf_prob, reach_depth=True)
+        self.root.grow(self.get_primitives(self.roles), depth - 1, leaf_prob, reach_depth=True)
 
     # Execute/evaluate the calling tree
     def execute(self, context):
@@ -229,7 +303,7 @@ class GeneticTree:
                 depth = random.randrange(0, mutant_depth_limit)
 
             if self.root.find_tag(target, self.branching_factor).mutate(
-                self.primitive_set, depth
+                self.get_primitives(self.roles), depth
             ):
                 break  # break on successful mutation
 
@@ -243,7 +317,7 @@ class GeneticTree:
             else:
                 depth = random.randrange(0, mutant_depth_limit)
             self.root.find_tag(target, self.branching_factor).grow(
-                self.primitive_set, depth
+                self.get_primitives(self.roles), depth
             )
         self.initialize(self.depth_limit, self.hard_limit)
 
