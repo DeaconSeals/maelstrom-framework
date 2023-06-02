@@ -153,7 +153,7 @@ class GeneticTree:
                 else:
                     types[output_type].add(input_types)
             for _ in range(MAXIMUM_TYPE_SIZE):
-                if len(min_sizes) = len(types):
+                if len(min_sizes) == len(types):
                     break
                 for output_type in types:
                     if output_type in min_sizes:
@@ -171,6 +171,51 @@ class GeneticTree:
                                     min_sizes[output_type] = min(min_sizes[output_type], size)
             cls.access_cache[roles]["min_sizes"] = min_sizes
         return cls.access_cache[roles]["min_sizes"]
+
+    @classmethod
+    def get_max_sizes(cls, roles):
+        if isinstance(roles, str):
+            roles = (roles,)  # turns the string into a single-element tuple
+        if roles not in cls.access_cache:
+            cls.access_cache[roles] = {}
+        if "max_sizes" not in cls.access_cache[roles]:
+            max_sizes = {}
+            primitives = cls.get_primitives(roles)
+            types = {}
+            for _, output_type, input_types in primitives:
+                if output_type not in types:
+                    types[output_type] = set()
+                types[output_type].add(input_types)
+            print(types)
+            for _ in range(MAXIMUM_TYPE_SIZE):
+                if len(max_sizes) == len(types):
+                    break
+                change = False
+                for output_type in types:
+                    if output_type in max_sizes:
+                        continue
+                    else:
+                        max_size = set()
+                        unbounded = False
+                        for input_types in types[output_type]:
+                            if len(input_types) == 0:
+                                max_size.add(0)
+                                continue
+                            for input_type in input_types:
+                                if input_type not in max_sizes or input_type == output_type:
+                                    unbounded = True
+                                    break
+                            else:
+                                max_size.add(max([max_sizes[input_type] for input_type in input_types]) + 1)
+                            if unbounded:
+                                break
+                        if not unbounded:
+                            max_sizes[output_type] = max(max_size)
+                            change = True
+                if not change:
+                    break
+            cls.access_cache[roles]["max_sizes"] = max_sizes
+        return cls.access_cache[roles]["max_sizes"]
 
     def __init__(self, roles, output_type):
         """
@@ -231,7 +276,7 @@ class GeneticTree:
         """
         Builds the calling tree object into a callable function
         """
-        self.func = eval("".join(["lambda context: ", self.string]), self.get_local(self.roles))
+        self.func = eval("".join(["lambda context: ", self.string]), self.get_local_context(self.roles))
 
     def clean(self):
         """
@@ -386,7 +431,7 @@ class GeneticTree:
             A calling tree object
         """
         genotype = cls(_dict["roles"], _dict["output_type"])
-        genotype.root.from_dict(genotype.primitive_set, _dict["root"])
+        genotype.root.from_dict(genotype.get_primitives(genotype.roles), _dict["root"])
         genotype.initialize(_dict["depthLimit"], _dict["hardLimit"])
         return genotype
 
