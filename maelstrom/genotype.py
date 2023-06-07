@@ -636,9 +636,25 @@ class Node:
         self.func = random.choice(options)[0]
         return True
 
-    # Execute/evaluate the subtree of the calling node as root
-    # def execute(self, context):
-    # 	return self.func(self, self.children, context)
+    def execute(self, context):
+        """
+        Execute/evaluate the subtree of the calling node as root. Assumes
+        internal primitives accept arguments of the form (children, context)
+        and call execute(context) on children nodes as appropriate. Literal
+        primitives may utilize self.value and reference context if desired.
+
+        Args:
+            context: input context object of the user's choice
+
+        Returns:
+            Any output specified by the user-defined root node
+        """
+        if self.value is not None:
+            try:
+                return eval(self.value, globals(), locals())
+            except:
+                return self.value
+        return self.func(self, *self.children, context)
 
     def copy(self):
         """
