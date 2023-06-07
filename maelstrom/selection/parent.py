@@ -1,14 +1,13 @@
 def uniform_random(population, n):
     return random.choices(population=population, k=n)
 
+
 def k_tournament(population, n, k):
     candidates = [index for index in range(len(population))]
     winners = []
     for i in range(n):
         participants = random.sample(candidates, k)
-        best = max(
-            [population[participant].fitness for participant in participants]
-        )
+        best = max([population[participant].fitness for participant in participants])
         champion = random.choice(
             [
                 participant
@@ -19,6 +18,7 @@ def k_tournament(population, n, k):
         winners.append(champion)
     return [population[parent] for parent in winners]
 
+
 def fitness_proportional_selection(population, n):
     fitnesses = [individual.fitness for individual in population]
     offset = min(fitnesses)
@@ -28,15 +28,14 @@ def fitness_proportional_selection(population, n):
         weights = [fitness - offset + 0.001 for fitness in fitnesses]
     return random.choices(population=population, weights=weights, k=n)
 
+
 def stochastic_universal_sampling(population, n):
     fitnesses = [individual.fitness for individual in population]
     offset = (
         min(fitnesses) * 1.1
     )  # multiply the min offset by 10% so the least fit individual has a non-zero chance of selection
     if offset == 0:
-        offset = (
-            -0.01
-        )  # mitigates the case where individuals with fitnesss of 0
+        offset = -0.01  # mitigates the case where individuals with fitnesss of 0
     else:
         offset = min(0, offset)
     roulette = [fitness - offset for fitness in fitnesses]
@@ -56,6 +55,7 @@ def stochastic_universal_sampling(population, n):
             pop_index += 1
     random.shuffle(parents)
     return parents
+
 
 def overselection(population, n, bias=0.8, partition=10):
     if partition > len(population) or partition < 0:

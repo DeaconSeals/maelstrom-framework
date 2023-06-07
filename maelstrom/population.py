@@ -6,6 +6,7 @@ import math
 import statistics
 from collections import OrderedDict
 from maelstrom.genotype import GeneticTree
+
 # from maelstrom.individual import GeneticProgrammingIndividual
 
 
@@ -66,8 +67,7 @@ class GeneticProgrammingPopulation:
 
         full = self.pop_size // 2
         self.population = [
-            self.genotype(self.roles, self.output_type)
-            for _ in range(self.pop_size)
+            self.genotype(self.roles, self.output_type) for _ in range(self.pop_size)
         ]
 
         for index in range(len(self.population)):
@@ -82,6 +82,7 @@ class GeneticProgrammingPopulation:
                     grow=True,
                     leaf_prob=leaf_prob,
                 )
+
     def initialization(self, *args, **kwargs):
         self.ramped_half_and_half(*args, **kwargs)
 
@@ -218,14 +219,10 @@ class GeneticProgrammingPopulation:
             if random.random() <= self.mutation:
                 children[i].subtree_mutation()
             else:
-                children[i].subtree_recombination(
-                    children[(i + 1) % len(children)]
-                )
+                children[i].subtree_recombination(children[(i + 1) % len(children)])
                 while children[i].depth > self.hard_limit:
                     children[i] = parents[i].copy()
-                    children[i].subtree_recombination(
-                        children[(i + 1) % len(children)]
-                    )
+                    children[i].subtree_recombination(children[(i + 1) % len(children)])
 
         if imports != None:
             children.extend([migrant.copy() for migrant in imports])
