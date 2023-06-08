@@ -6,6 +6,14 @@ global MAXIMUM_TYPE_SIZE
 MAXIMUM_TYPE_SIZE = 1000
 
 
+def format_roles(roles):
+    if isinstance(roles, (str, int, float)):
+        roles = (roles,)  # turns the string into a single-element tuple
+    elif not isinstance(roles, tuple):
+        roles = tuple(roles)
+    return roles
+
+
 class GeneticTree:
     """
     A class for representing a tree in a GP program. This class is designed
@@ -59,8 +67,7 @@ class GeneticTree:
             kwargs: A dictionary of keyword arguments to be passed to the primitive
 
         """
-        if isinstance(roles, str):
-            roles = (roles,)  # turns the string into a single-element tuple
+        roles = format_roles(roles)
 
         def add_primitive(func):
             """
@@ -181,8 +188,7 @@ class GeneticTree:
 
     @classmethod
     def get_primitives(cls, roles):
-        if isinstance(roles, str):
-            roles = (roles,)  # turns the string into a single-element tuple
+        roles = format_roles(roles)
         if roles not in cls.access_cache:
             cls.access_cache[roles] = {}
         if "primitives" not in cls.access_cache[roles]:
@@ -214,8 +220,7 @@ class GeneticTree:
 
     @classmethod
     def get_literal_init(cls, roles):
-        if isinstance(roles, str):
-            roles = (roles,)  # turns the string into a single-element tuple
+        roles = format_roles(roles)
         if roles not in cls.access_cache:
             cls.access_cache[roles] = {}
         if "literal_init" not in cls.access_cache[roles]:
@@ -230,8 +235,7 @@ class GeneticTree:
 
     @classmethod
     def get_local_context(cls, roles):
-        if isinstance(roles, str):
-            roles = (roles,)  # turns the string into a single-element tuple
+        roles = format_roles(roles)
         if roles not in cls.access_cache:
             cls.access_cache[roles] = {}
         if "local" not in cls.access_cache[roles]:
@@ -250,8 +254,7 @@ class GeneticTree:
         the roles assigned to the object and a root node of the desired output
         type.
         """
-        if isinstance(roles, str):
-            roles = (roles,)  # turns the string into a single-element tuple
+        roles = format_roles(roles)
         self.roles = roles
         primitive_set = self.get_primitives(self.roles)
         assert len(primitive_set) > 0, "No valid roles used in tree declaration"
