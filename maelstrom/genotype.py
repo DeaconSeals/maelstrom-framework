@@ -657,7 +657,7 @@ class Node:
                 return eval(self.value, globals(), locals())
             except:
                 return self.value
-        return self.func(self, *self.children, context)
+        return self.func(*self.children, context)
 
     def copy(self):
         """
