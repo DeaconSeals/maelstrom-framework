@@ -36,7 +36,7 @@ class Maelstrom:
         migration_edges=None,
         cores=None,
         position=None,
-        **kwargs,
+        eval_executor=None**kwargs,
     ):
         """
         Initializes a Maelstrom object
@@ -59,12 +59,16 @@ class Maelstrom:
             cores = min(32, multiprocessing.cpu_count())
         self.cores = cores
         self.position = position
+        self.eval_executor = eval_executor
         # self.evalPool = multiprocessing.Pool(cores)
 
         # Initialize islands
         for key in islands:
             self.islands[key] = self.island_class(
-                cores=self.cores, **kwargs[islands[key]], **kwargs
+                cores=self.cores,
+                eval_executor=self.eval_executor,
+                **kwargs[islands[key]],
+                **kwargs,
             )
         self.evals = sum(island.evals for island in self.islands.values())
 
@@ -73,14 +77,21 @@ class Maelstrom:
     # def __del__(self):
     # 	self.evalPool.close()
 
-    def run(self):
+    def run(self, eval_executor=None):
         """
         Performs a single run of evolution until termination
         """
         generation = 1
+        if eval_executor == None and self.eval_executor == None:
+            eval_executor = multiprocessing.Pool(self.cores)
+            close_pool = True
+        elif eval_executor == None and self.eval_executor != None:
+            eval_executor = self.eval_executor
+        else:
+            close_pool = False
 
         self.evals = sum(island.evals for island in self.islands.values())
-        with multiprocessing.Pool(self.cores) as eval_pool:
+        with multiprocessing.pool.ThreadPool() as island_executor:
             with tqdm(
                 total=self.eval_limit, unit=" evals", position=self.position
             ) as pbar:
@@ -120,11 +131,10 @@ class Maelstrom:
                                 ] = migrants
 
                     # Evolve one full generation with each island
-                    with multiprocessing.pool.ThreadPool() as executor:
-                        executor.starmap(
-                            self.island_class.generation,
-                            [(island, eval_pool) for island in self.islands.values()],
-                        )
+                    island_executor.starmap(
+                        self.island_class.generation,
+                        [(island, eval_executor) for island in self.islands.values()],
+                    )
                     self.evals = sum(island.evals for island in self.islands.values())
                     generation += 1
                     pbar.set_description(
@@ -147,6 +157,8 @@ class Maelstrom:
 
         for key, val in self.islands.items():
             self.log[key] = val.log
+        if close_pool:
+            eval_executor.close()
         return self
 
     def build(self):

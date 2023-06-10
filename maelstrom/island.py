@@ -16,7 +16,7 @@ class GeneticProgrammingIsland:
         evaluation_kwargs={},
         population_class=GeneticProgrammingPopulation,
         initialization_kwargs={},
-        eval_pool=None,
+        eval_executor=None,
         evaluations=None,
         champions_per_generation=0,
         cores=None,
@@ -45,9 +45,16 @@ class GeneticProgrammingIsland:
         self.position = position
 
         # Fitness evaluations occur here
-        with multiprocessing.Pool(self.cores) as eval_pool:
+        if eval_executor == None:
+            with multiprocessing.Pool(self.cores) as eval_executor:
+                generation_data, self.evals = self.evaluation(
+                    **self.populations,
+                    executor=eval_executor,
+                    **self.evaluation_parameters,
+                )
+        else:
             generation_data, self.evals = self.evaluation(
-                **self.populations, executor=eval_pool, **self.evaluation_parameters
+                **self.populations, executor=eval_executor, **self.evaluation_parameters
             )
         for key in generation_data:
             self.log[key] = [generation_data[key]]
@@ -69,12 +76,12 @@ class GeneticProgrammingIsland:
         self.eval_limit = evaluations
 
     # Performs a single generation of evolution
-    def generation(self, eval_pool=None):
+    def generation(self, eval_executor=None):
         """
         Performs a single generation of evolution
 
         Args:
-            eval_pool (multiprocessing.Pool): Pool of processes to use for evaluation
+            eval_executor (multiprocessing.Pool): Pool of processes to use for evaluation
 
         Returns:
             self
@@ -88,7 +95,7 @@ class GeneticProgrammingIsland:
         self.imports.clear()
 
         generation_data, num_evals = self.evaluation(
-            **self.populations, executor=eval_pool, **self.evaluation_parameters
+            **self.populations, executor=eval_executor, **self.evaluation_parameters
         )
         self.evals += num_evals
         for key in generation_data:
@@ -152,7 +159,7 @@ class GeneticProgrammingIsland:
         Returns:
             self
         """
-        with multiprocessing.Pool(self.cores) as eval_pool:
+        with multiprocessing.Pool(self.cores) as eval_executor:
             with tqdm(
                 total=self.eval_limit, unit=" evals", position=self.position
             ) as pbar:
@@ -163,7 +170,7 @@ class GeneticProgrammingIsland:
                 while not self.termination():
                     evals_old = self.evals
                     # print(f"Beginning generation: {generation}\tEvaluations: {self.evals}")
-                    self.generation(eval_pool)
+                    self.generation(eval_executor)
                     pbar.set_description(
                         f"COEA Generation {self.generation_count}", refresh=False
                     )
