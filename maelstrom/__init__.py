@@ -88,6 +88,7 @@ class Maelstrom:
             close_pool = True
         elif eval_executor == None and self.eval_executor != None:
             eval_executor = self.eval_executor
+            close_pool = False
         else:
             close_pool = False
 
