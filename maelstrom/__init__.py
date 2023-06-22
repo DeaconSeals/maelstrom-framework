@@ -91,7 +91,7 @@ class Maelstrom:
             close_pool = False
 
         self.evals = sum(island.evals for island in self.islands.values())
-        with multiprocessing.pool.ThreadPool() as island_executor:
+        with multiprocessing.pool.ThreadPool(min(self.cores*5, len(self.islands))) as island_executor:
             with tqdm(
                 total=self.eval_limit, unit=" evals", position=self.position
             ) as pbar:
