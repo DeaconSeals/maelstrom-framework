@@ -36,7 +36,8 @@ class Maelstrom:
         migration_edges=None,
         cores=None,
         position=None,
-        eval_executor=None**kwargs,
+        eval_executor=None,
+        **kwargs,
     ):
         """
         Initializes a Maelstrom object
