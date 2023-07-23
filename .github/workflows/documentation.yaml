@@ -6,14 +6,16 @@ jobs:
   docs:
     runs-on: ubuntu-latest
     steps:
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v3
       - name: Install dependencies
         run: |
-          pip install sphinx furo
+          poetry install
       - name: Sphinx build
         run: |
-          sphinx-build docs/source _build
+          poetry run sphinx-build docs/source _build
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
         if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
