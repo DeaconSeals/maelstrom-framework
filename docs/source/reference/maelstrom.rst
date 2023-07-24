@@ -12,14 +12,6 @@ maelstrom.genotype module
    :undoc-members:
    :show-inheritance:
 
-maelstrom.individual module
----------------------------
-
-.. automodule:: maelstrom.individual
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 maelstrom.island module
 -----------------------
 

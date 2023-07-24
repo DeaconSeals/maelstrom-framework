@@ -6,7 +6,7 @@
 SPHINXOPTS    ?=
 SPHINXBUILD   ?= sphinx-build
 SOURCEDIR     = source
-BUILDDIR      = build
+BUILDDIR      = _build
 
 # Put it first so that "make" without argument is like "make help".
 help:
@@ -14,7 +14,7 @@ help:
 
 # command to generate rst files. Run this when new modules are added
 rst:
-	sphinx-apidoc -f -o source/ ../maelstrom
+	sphinx-apidoc -f -o ./source/reference/ ../maelstrom
 
 .PHONY: help Makefile
 
