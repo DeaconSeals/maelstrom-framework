@@ -14,7 +14,7 @@ help:
 
 # command to generate rst files. Run this when new modules are added
 rst:
-	sphinx-apidoc -f -o source/ ../maelstrom
+	sphinx-apidoc -f -o ./source/reference/ ../maelstrom
 
 .PHONY: help Makefile
 

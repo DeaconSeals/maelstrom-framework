@@ -21,6 +21,7 @@ release = "March 25, 2023"
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
+    "sphinx_mdinclude",
 ]
 
 templates_path = ["_templates"]
@@ -31,4 +32,5 @@ exclude_patterns = [".DS_Store"]
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 html_theme = "furo"
+html_title = "Maelstrom Framework"
 html_static_path = ["_static"]
