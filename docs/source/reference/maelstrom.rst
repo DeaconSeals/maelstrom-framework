@@ -28,14 +28,6 @@ maelstrom.population module
    :undoc-members:
    :show-inheritance:
 
-maelstrom.test module
----------------------
-
-.. automodule:: maelstrom.test
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 Module contents
 ---------------
 
