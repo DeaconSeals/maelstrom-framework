@@ -12,4 +12,4 @@ pip install snake-eyes-parser
 
 ## Examples
 Examples for this framework can be found in the following repo:
-https://github.com/DeaconSeals/maelstrom-framework
+https://github.com/DeaconSeals/maelstrom-examples
